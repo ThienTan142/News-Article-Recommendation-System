@@ -1,0 +1,9 @@
+README.md
+setup.py
+news_project.egg-info/PKG-INFO
+news_project.egg-info/SOURCES.txt
+news_project.egg-info/dependency_links.txt
+news_project.egg-info/top_level.txt
+src/__init__.py
+src/embedding.py
+src/preprocess.py
