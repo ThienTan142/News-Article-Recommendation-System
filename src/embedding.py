@@ -5,25 +5,25 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
-import numpy as np
 from sentence_transformers import SentenceTransformer
-import tqdm
+from tqdm import tqdm
+import numpy as np
 
 class NewsEmbedder:
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
-        print(f"[INFO] Loading model: {model_name}")
+        print(f"[INFO] Loading SBERT model: {model_name}")
         self.model = SentenceTransformer(model_name)
 
-    def encode_news(self, texts):
+    def encode_news(self, texts, batch_size=32):
         """
-        texts: list of cleaned news text
-        return: numpy array of shape (num_news, 384)
+        Encode news articles into embeddings.
         """
-        print(f"[INFO] Generating embeddings for {len(texts)} articles...")
-        vectors = []
+        all_embeddings = []
 
-        for text in tqdm(texts):
-            vec = self.model.encode(text)
-            vectors.append(vec)
+        for i in tqdm(range(0, len(texts), batch_size), desc="Encoding batches"):
+            batch = texts[i:i + batch_size]
+            batch_emb = self.model.encode(batch, convert_to_numpy=True)
+            all_embeddings.append(batch_emb)
 
-        return np.array(vectors)
+        embeddings = np.vstack(all_embeddings)
+        return embeddings
