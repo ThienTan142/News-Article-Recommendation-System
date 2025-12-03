@@ -1,51 +1,48 @@
-import sys
-import os
-
-# Thêm thư mục Project vào sys.path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import pandas as pd
 import numpy as np
+from sentence_transformers import SentenceTransformer
+from tqdm import tqdm
 import os
 
-from src.embedding import NewsEmbedder
-
-
 def main():
-    input_path = "data/processed/news_clean.csv"
-    output_emb_path = "data/interim/article_embeddings.npy"
-    output_ids_path = "data/interim/article_ids.npy"
+    print("[INFO] Loading cleaned news...")
+    df = pd.read_csv("data/processed/news_clean.csv")
 
-    print("[INFO] Loading cleaned news:", input_path)
-    df = pd.read_csv(input_path)
+    # Kiểm tra cột
+    if "news_id" not in df.columns or "clean_text" not in df.columns:
+        raise ValueError("File news_clean.csv phải có 2 cột: news_id và clean_text")
 
-    # Kiểm tra cột clean_text
-    if "clean_text" not in df.columns:
-        raise ValueError("[ERROR] Column 'clean_text' not found in news_clean.csv")
-
+    # Convert clean_text về dạng list
     texts = df["clean_text"].astype(str).tolist()
-    article_ids = df["news_id"].tolist()
 
-    print(f"[INFO] Total articles to embed: {len(texts)}")
+    print(f"[INFO] Loaded {len(texts)} articles")
 
-    # Load model
-    embedder = NewsEmbedder()
+    # Load SBERT model
+    print("[INFO] Loading model: all-MiniLM-L6-v2")
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    # Generate embeddings
-    embeddings = embedder.encode_news(texts)
+    # Encode toàn bộ bài báo (tạo embeddings)
+    print("[INFO] Generating embeddings...")
+    embeddings = model.encode(
+        texts,
+        batch_size=64,
+        show_progress_bar=True,
+        convert_to_numpy=True
+    )
 
-    # Create output directory if missing
-    os.makedirs("data/interim", exist_ok=True)
+    print("[INFO] Embeddings shape:", embeddings.shape)
 
-    # Save embeddings + IDs
-    np.save(output_emb_path, embeddings)
-    np.save(output_ids_path, np.array(article_ids))
+    # Tạo folder nếu chưa có
+    os.makedirs("data/embeddings", exist_ok=True)
 
-    print("[INFO] Saved embeddings to:", output_emb_path)
-    print("[INFO] Saved article IDs to:", output_ids_path)
-    print("[DONE] Embedding generation completed!")
+    # Lưu embeddings
+    np.save("data/embeddings/news_embeddings.npy", embeddings)
+    
+    # Lưu lại news_id tương ứng
+    df[["news_id"]].to_csv("data/embeddings/news_ids.csv", index=False)
+
+    print("[DONE] Saved embeddings to data/embeddings/")
 
 
 if __name__ == "__main__":
     main()
-
