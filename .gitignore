@@ -1,32 +1,7 @@
 # Env
 env/
-venv/
-
-# Python cache
-__pycache__/
-*.pyc
-
-# Data
 data/
-precompute/
 *.csv
 *.npy
 *.pkl
-
-# Zip
 *.zip
-
-# Model checkpoints
-models/
-*.pt
-*.ckpt
-
-# Logs
-*.log
-logs/
-
-
-data/
-*.csv
-*.npy
-*.pkl
