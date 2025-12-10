@@ -1,0 +1,33 @@
+# Xử lý dữ liệu
+numpy==1.24.4
+pandas==2.0.3
+scipy==1.10.1
+
+# NLP & embeddings
+nltk==3.9.1
+spacy==3.5.4
+sentence-transformers==2.2.2
+transformers==4.34.0
+torch==2.1.0
+torchvision==0.16.0
+
+# Topic modeling
+gensim==4.4.0
+
+# Machine Learning
+scikit-learn==1.2.2
+xgboost==1.6.2
+
+# Web scraping
+requests==2.32.0
+beautifulsoup4==4.13.0
+selenium==5.11.0
+
+# Visualization
+matplotlib==3.7.2
+seaborn==0.12.3
+plotly==6.2.3
+
+# Utils
+tqdm==4.66.1
+python-dotenv==1.1.1
