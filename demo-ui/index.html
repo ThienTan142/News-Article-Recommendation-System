@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MINDsmall Recommendation Demo</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace" aria-label="Recommendation demo workspace">
+        <aside class="sidebar" aria-label="Pipeline controls">
+          <div class="brand-block">
+            <div class="brand-mark" aria-hidden="true">NR</div>
+            <div>
+              <p class="eyebrow">MINDsmall pipeline</p>
+              <h1>News recommendation demo</h1>
+            </div>
+          </div>
+
+          <div class="status-stack" aria-label="Pipeline status">
+            <div class="status-row complete">
+              <span class="status-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Dataset</strong>
+                <span>news.tsv + behaviors.tsv</span>
+              </div>
+            </div>
+            <div class="status-row complete">
+              <span class="status-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Embeddings</strong>
+                <span>SentenceTransformer artifacts</span>
+              </div>
+            </div>
+            <div class="status-row active">
+              <span class="status-dot" aria-hidden="true"></span>
+              <div>
+                <strong>Recommend</strong>
+                <span>CLI JSON pasted into UI</span>
+              </div>
+            </div>
+          </div>
+
+          <section class="panel compact">
+            <h2>Run command</h2>
+            <div class="command-box">
+              <code>python -m src.run_recommend_cli --user U8125 --topk 10 --json</code>
+              <button class="icon-button" type="button" data-copy-command aria-label="Copy command">Copy</button>
+            </div>
+            <p class="hint">Paste the JSON output below, or load the sample result for a quick demo.</p>
+          </section>
+
+          <section class="panel compact">
+            <h2>Demo mode</h2>
+            <div class="segmented" role="group" aria-label="Demo ranking mode">
+              <button type="button" class="segment active" data-mode="ctr">CTR</button>
+              <button type="button" class="segment" data-mode="similarity">Similarity</button>
+            </div>
+          </section>
+        </aside>
+
+        <section class="content" aria-label="Recommendation results">
+          <header class="topbar">
+            <div>
+              <p class="eyebrow">CLI-first interface</p>
+              <h2>Explainable recommendation output</h2>
+            </div>
+            <div class="topbar-actions">
+              <button class="secondary-button" type="button" data-load-sample>Load sample</button>
+              <button class="primary-button" type="button" data-render-json>Render JSON</button>
+            </div>
+          </header>
+
+          <section class="metrics-grid" aria-label="Recommendation summary">
+            <article class="metric">
+              <span>Ranking source</span>
+              <strong data-summary-source>CTR</strong>
+            </article>
+            <article class="metric">
+              <span>Cold start</span>
+              <strong data-summary-cold>No</strong>
+            </article>
+            <article class="metric">
+              <span>Results</span>
+              <strong data-summary-count>5</strong>
+            </article>
+          </section>
+
+          <section class="input-panel" aria-label="JSON input">
+            <label for="json-input">CLI JSON output</label>
+            <textarea id="json-input" spellcheck="false" data-json-input></textarea>
+            <p class="error-message" role="alert" data-error hidden></p>
+          </section>
+
+          <section class="result-layout">
+            <div class="results-column">
+              <div class="section-heading">
+                <h2>Recommended articles</h2>
+                <span data-result-caption>Ranked by CTR, diversified by MMR</span>
+              </div>
+              <div class="result-list" data-results></div>
+            </div>
+
+            <aside class="explain-panel" aria-label="Pipeline explanation">
+              <h2>How this result was produced</h2>
+              <ol class="timeline">
+                <li>
+                  <strong>User profile</strong>
+                  <span>Average embeddings from read history, or mean article vector for cold start.</span>
+                </li>
+                <li>
+                  <strong>Candidate retrieval</strong>
+                  <span>Cosine similarity over precomputed MINDsmall article embeddings.</span>
+                </li>
+                <li>
+                  <strong>CTR reranking</strong>
+                  <span>MLP scores user/article embedding pairs when the trained model is available.</span>
+                </li>
+                <li>
+                  <strong>MMR diversity</strong>
+                  <span>Final pass reduces near-duplicate recommendations.</span>
+                </li>
+              </ol>
+              <div class="embedding-map" aria-label="Embedding map preview">
+                <span class="node primary"></span>
+                <span class="node n1"></span>
+                <span class="node n2"></span>
+                <span class="node n3"></span>
+                <span class="node n4"></span>
+                <span class="node n5"></span>
+              </div>
+            </aside>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <template id="result-template">
+      <article class="result-card">
+        <div class="article-thumb" aria-hidden="true"></div>
+        <div class="article-body">
+          <div class="article-meta">
+            <span data-rank></span>
+            <span data-category></span>
+          </div>
+          <h3 data-title></h3>
+          <p data-text></p>
+          <div class="score-row">
+            <span data-news-id></span>
+            <meter min="0" max="1" value="0" data-score-meter></meter>
+            <strong data-score></strong>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="./demo.js"></script>
+  </body>
+</html>

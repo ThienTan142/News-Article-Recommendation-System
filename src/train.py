@@ -1,5 +1,5 @@
-# src/train.py
 import os
+import sys
 import numpy as np
 import pandas as pd
 import torch
@@ -8,23 +8,21 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from tqdm.auto import tqdm
-from joblib import dump
 
-from src.embedding import load_news_embeddings
+from src.artifacts import ProjectArtifactError, ensure_file
+from src.config import (
+    BATCH_SIZE,
+    DEVICE,
+    EPOCHS,
+    LEARNING_RATE,
+    PATHS,
+    RANDOM_SEED,
+    TRAIN_MAX_ROWS,
+    VALIDATION_SIZE,
+)
 from src.user_profile import load_user_history, build_user_vector_from_history
 from src.dl_model import CTR_MLP
-
-# Config
-CTR_SAMPLES = "data/precompute/ctr_dataset.csv"
-NEWS_EMB = "data/precompute/news_embeddings.npy"
-NEWS_META = "data/precompute/news_metadata.csv"
-USER_HISTORY = "data/precompute/user_history.pkl"
-OUT_MODEL = "models/ctr_model.pt"
-
-BATCH_SIZE = 256
-EPOCHS = 8
-LR = 1e-3
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+from src.embedding import load_news_embeddings
 
 
 # ----------------------- Dataset -----------------------
@@ -74,20 +72,27 @@ def collate_fn(batch):
 
 # ----------------------- Trainer -----------------------
 def train():
-    os.makedirs("models", exist_ok=True)
+    os.makedirs(PATHS.ctr_model_path.parent, exist_ok=True)
+    np.random.seed(RANDOM_SEED)
+    torch.manual_seed(RANDOM_SEED)
 
-    print("📥 Loading embeddings + metadata...")
+    print("Loading embeddings + metadata...", flush=True)
     news_emb, news_meta = load_news_embeddings()
     user_hist = load_user_history()
 
-    df = pd.read_csv(CTR_SAMPLES)
+    ctr_dataset_path = ensure_file(
+        PATHS.ctr_dataset_path,
+        "CTR dataset",
+        "python scripts/build_ctr_dataset.py",
+    )
+    df = pd.read_csv(ctr_dataset_path)
 
     # Optional subsample
-    if len(df) > 150000:
-        df = df.sample(n=150000, random_state=42).reset_index(drop=True)
-        print("⚠ Using subsample 150k for speed")
+    if len(df) > TRAIN_MAX_ROWS:
+        df = df.sample(n=TRAIN_MAX_ROWS, random_state=RANDOM_SEED).reset_index(drop=True)
+        print(f"Using subsample {TRAIN_MAX_ROWS} for speed")
 
-    train_df, val_df = train_test_split(df, test_size=0.15, random_state=42)
+    train_df, val_df = train_test_split(df, test_size=VALIDATION_SIZE, random_state=RANDOM_SEED)
 
     train_ds = CTRDataset(train_df, news_emb, news_meta, user_hist)
     val_ds = CTRDataset(val_df, news_emb, news_meta, user_hist)
@@ -99,9 +104,9 @@ def train():
     model = CTR_MLP(emb_dim).to(DEVICE)
 
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
-    print("\n🚀 Start training...\n")
+    print("\nStart training...\n")
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
@@ -122,7 +127,7 @@ def train():
             train_bar.set_postfix(loss=loss.item())
 
         avg_loss = total_loss / len(train_loader.dataset)
-        print(f"🟢 Train Loss = {avg_loss:.4f}")
+        print(f"Train Loss = {avg_loss:.4f}")
 
         # Validation
         model.eval()
@@ -141,14 +146,18 @@ def train():
 
         try:
             auc = roc_auc_score(val_labels, val_preds)
-        except:
+        except ValueError:
             auc = 0.0
 
-        print(f"🔵 Validation AUC = {auc:.4f}\n")
+        print(f"Validation AUC = {auc:.4f}\n")
 
-    torch.save(model.state_dict(), OUT_MODEL)
-    print("🎉 Model saved at:", OUT_MODEL)
+    torch.save(model.state_dict(), PATHS.ctr_model_path)
+    print("Model saved at:", PATHS.ctr_model_path)
 
 
 if __name__ == "__main__":
-    train()
+    try:
+        train()
+    except ProjectArtifactError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc

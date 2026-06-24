@@ -1,9 +1,15 @@
-# src/diversity.py
 import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 
 def mmr_rerank(query_emb, doc_embs, doc_ids, top_k=10, lambda_param=0.7):
-    # normalize
+    if top_k <= 0:
+        raise ValueError("top_k must be greater than 0")
+    if not 0 <= lambda_param <= 1:
+        raise ValueError("lambda_param must be between 0 and 1")
+    if len(doc_ids) != len(doc_embs):
+        raise ValueError("doc_ids length must match doc_embs rows")
+    if len(doc_ids) == 0:
+        return []
+
     q = query_emb / (np.linalg.norm(query_emb) + 1e-12)
     docs = doc_embs.copy()
     docs = docs / (np.linalg.norm(docs, axis=1, keepdims=True) + 1e-12)
@@ -14,7 +20,8 @@ def mmr_rerank(query_emb, doc_embs, doc_ids, top_k=10, lambda_param=0.7):
         scores = []
         for i in range(len(doc_ids)):
             if i in selected:
-                scores.append(-1e9); continue
+                scores.append(-1e9)
+                continue
             if not selected:
                 div = 0.0
             else:
