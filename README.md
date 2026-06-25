@@ -79,6 +79,22 @@ Neu chi can smoke test nhanh pipeline tren CPU, dung tap con nho:
 python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
 ```
 
+## Train on Google Colab
+
+Neu muon train nhanh hon bang GPU Colab, dung notebook:
+
+```text
+notebooks/colab_train.ipynb
+```
+
+Trong Colab, doi runtime sang GPU, sua bien `MIND_DIR` toi folder MINDsmall tren Google Drive, roi chay cac cell tu tren xuong duoi. Notebook se clone repo, cai dependencies, build artifact, train CTR reranker, chay recommendation mau, va copy artifact ve Google Drive.
+
+Mo truc tiep tren Colab:
+
+```text
+https://colab.research.google.com/github/ThienTan142/News-Article-Recommendation-System/blob/codex/mindsmall-pipeline-cleanup/notebooks/colab_train.ipynb
+```
+
 ## Run Recommendations
 
 Chay CLI:
