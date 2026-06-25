@@ -185,6 +185,12 @@ Lenh:
 python -m src.train
 ```
 
+Lenh smoke test nhanh tren CPU:
+
+```powershell
+python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
+```
+
 File chinh:
 
 - `src/train.py`
@@ -201,9 +207,10 @@ Luong xu ly:
    - tao user vector bang trung binh embedding cac bai user da doc.
    - lay item vector tu embedding cua `news_id`.
    - neu user khong co history hop le, dung mean news embedding.
-5. Train `CTR_MLP` voi input la noi vector user va vector item.
-6. Danh gia validation AUC theo tung epoch.
-7. Luu model state dict.
+5. Cache user vector theo `user_id` trong moi dataset split de tranh tinh lai nhieu lan.
+6. Train `CTR_MLP` voi input la noi vector user va vector item.
+7. Danh gia validation AUC theo tung epoch.
+8. Luu model state dict.
 
 Output:
 
@@ -359,7 +366,7 @@ python scripts/precompute_user_history.py
 
 python scripts/build_ctr_dataset.py
 
-python -m src.train
+python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
 
 python -m src.run_recommend_cli --user U8125 --topk 10
 python -m src.run_recommend_cli --user U8125 --topk 10 --json
@@ -367,9 +374,8 @@ python -m src.run_recommend_cli --user U8125 --topk 10 --json
 
 ## 11. Diem can hoan thien tiep
 
-1. Them `scripts/build_ctr_dataset.py` de thay Python one-liner.
-2. Them `scripts/check_artifacts.py` de kiem tra nhanh artifact con thieu.
-3. Luu `models/metrics.json` va `models/model_config.json` sau training.
-4. Them evaluation script voi Recall@K, NDCG@K, MRR.
-5. Toi uu candidate retrieval bang ANN neu corpus lon.
-6. Them CI chay compile va unit tests.
+1. Them `scripts/check_artifacts.py` de kiem tra nhanh artifact con thieu.
+2. Luu `models/metrics.json` va `models/model_config.json` sau training.
+3. Them evaluation script voi Recall@K, NDCG@K, MRR.
+4. Toi uu candidate retrieval bang ANN neu corpus lon.
+5. Them CI chay compile va unit tests.

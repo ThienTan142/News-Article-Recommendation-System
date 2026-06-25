@@ -73,6 +73,12 @@ Sau do train:
 python -m src.train
 ```
 
+Neu chi can smoke test nhanh pipeline tren CPU, dung tap con nho:
+
+```powershell
+python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
+```
+
 ## Run Recommendations
 
 Chay CLI:
@@ -121,7 +127,7 @@ src/ranking.py                    CTR model loading and reranking
 src/diversity.py                  MMR diversity reranking
 src/dl_model.py                   PyTorch CTR MLP model
 src/ctr_dataset.py                CTR sample generation from impressions
-src/train.py                      CTR model training script
+src/train.py                      CTR model training script with configurable quick runs
 src/run_recommend_cli.py          CLI entry point
 scripts/precompute_news.py        Offline article embedding generation
 scripts/precompute_user_history.py Offline user history generation
