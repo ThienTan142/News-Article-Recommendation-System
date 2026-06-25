@@ -1,7 +1,7 @@
 # Core data processing
-numpy>=1.24,<2
-pandas>=2.0,<3
-scipy>=1.10,<2
+numpy>=1.26.4,<2
+pandas>=2.2.2,<3
+scipy>=1.13,<2
 
 # NLP and embeddings
 sentence-transformers>=2.2,<3
@@ -9,7 +9,7 @@ transformers>=4.34,<5
 
 # Machine learning
 torch>=2.1,<3
-scikit-learn>=1.2,<2
+scikit-learn>=1.5,<2
 
 # Utilities
 tqdm>=4.66,<5
