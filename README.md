@@ -87,7 +87,13 @@ Neu muon train nhanh hon bang GPU Colab, dung notebook:
 notebooks/colab_train.ipynb
 ```
 
-Trong Colab, doi runtime sang GPU, sua bien `MIND_DIR` toi folder MINDsmall tren Google Drive, roi chay cac cell tu tren xuong duoi. Notebook se clone repo, cai dependencies, build artifact, train CTR reranker, chay recommendation mau, va copy artifact ve Google Drive.
+Trong Colab, doi runtime sang GPU, sua bien `MIND_DIR` toi folder MINDsmall tren Google Drive, roi chay cac cell tu tren xuong duoi. Notebook se clone repo, tao virtualenv sach tai `/content/news-rec-venv`, cai dependencies, build artifact, train CTR reranker, chay recommendation mau, va copy artifact ve Google Drive.
+
+Neu gap loi `numpy.dtype size changed`, chon `Runtime` -> `Disconnect and delete runtime`, mo lai notebook moi, va chay lai tu dau. Cell cai dependencies phai in ra Python path la:
+
+```text
+/content/news-rec-venv/bin/python
+```
 
 Mo truc tiep tren Colab:
 
