@@ -73,6 +73,8 @@ Sau do train:
 python -m src.train
 ```
 
+Mac dinh lenh tren train tren toan bo `data/precompute/ctr_dataset.csv`.
+
 Neu chi can smoke test nhanh pipeline tren CPU, dung tap con nho:
 
 ```powershell

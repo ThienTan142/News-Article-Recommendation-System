@@ -185,6 +185,8 @@ Lenh:
 python -m src.train
 ```
 
+Mac dinh lenh tren train tren toan bo `data/precompute/ctr_dataset.csv`.
+
 Lenh smoke test nhanh tren CPU:
 
 ```powershell

@@ -21,7 +21,6 @@ from src.config import (
     LEARNING_RATE,
     PATHS,
     RANDOM_SEED,
-    TRAIN_MAX_ROWS,
     VALIDATION_SIZE,
 )
 from src.user_profile import load_user_history, build_user_vector_from_history
@@ -137,7 +136,12 @@ def positive_int(value):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Train the CTR reranker.")
-    parser.add_argument("--max-rows", type=positive_int, default=TRAIN_MAX_ROWS)
+    parser.add_argument(
+        "--max-rows",
+        type=positive_int,
+        default=None,
+        help="Optional row limit for fast CPU/debug runs. Default trains on all rows.",
+    )
     parser.add_argument("--epochs", type=positive_int, default=EPOCHS)
     parser.add_argument("--batch-size", type=positive_int, default=BATCH_SIZE)
     parser.add_argument("--model-path", type=Path, default=PATHS.ctr_model_path)
@@ -151,7 +155,7 @@ def parse_args(argv=None):
 
 
 def train(
-    max_rows=TRAIN_MAX_ROWS,
+    max_rows=None,
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     model_path=PATHS.ctr_model_path,
@@ -178,7 +182,7 @@ def train(
     df = pd.read_csv(ctr_dataset_path)
 
     # Optional subsample
-    if len(df) > max_rows:
+    if max_rows is not None and len(df) > max_rows:
         df = df.sample(n=max_rows, random_state=RANDOM_SEED).reset_index(drop=True)
         print(f"Using subsample {max_rows} for speed")
 

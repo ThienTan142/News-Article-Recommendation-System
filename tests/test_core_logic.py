@@ -110,5 +110,21 @@ class MindDatasetPathTests(unittest.TestCase):
             self.assertEqual(paths.root, train_dir)
 
 
+class TrainCliTests(unittest.TestCase):
+    def test_train_defaults_to_all_rows(self):
+        from src.train import parse_args
+
+        args = parse_args([])
+
+        self.assertIsNone(args.max_rows)
+
+    def test_train_accepts_explicit_row_limit(self):
+        from src.train import parse_args
+
+        args = parse_args(["--max-rows", "150000"])
+
+        self.assertEqual(args.max_rows, 150000)
+
+
 if __name__ == "__main__":
     unittest.main()
