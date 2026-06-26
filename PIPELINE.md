@@ -191,6 +191,12 @@ Lenh smoke test nhanh tren CPU:
 python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
 ```
 
+Lenh train CPU nhanh hon cho 150k rows:
+
+```powershell
+python -m src.train --max-rows 150000 --epochs 3 --batch-size 2048 --torch-threads 4
+```
+
 File chinh:
 
 - `src/train.py`
@@ -207,10 +213,11 @@ Luong xu ly:
    - tao user vector bang trung binh embedding cac bai user da doc.
    - lay item vector tu embedding cua `news_id`.
    - neu user khong co history hop le, dung mean news embedding.
-5. Cache user vector theo `user_id` trong moi dataset split de tranh tinh lai nhieu lan.
-6. Train `CTR_MLP` voi input la noi vector user va vector item.
-7. Danh gia validation AUC theo tung epoch.
-8. Luu model state dict.
+5. Mac dinh materialize user/item/label thanh tensor truoc khi train de giam Python overhead tren CPU.
+6. Neu may it RAM, dung `--lazy-dataset` de quay lai dataset tinh theo sample va cache user vector theo `user_id`.
+7. Train `CTR_MLP` voi input la noi vector user va vector item.
+8. Danh gia validation AUC theo tung epoch.
+9. Luu model state dict.
 
 Output:
 

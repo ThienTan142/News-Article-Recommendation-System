@@ -1,12 +1,13 @@
 import argparse
 import os
 import sys
+from time import perf_counter
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, TensorDataset
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
@@ -85,6 +86,44 @@ def collate_fn(batch):
     return torch.tensor(users), torch.tensor(items), torch.tensor(labels)
 
 
+def build_tensor_dataset(df, news_emb, news_meta, user_history):
+    id_to_index = {nid: i for i, nid in enumerate(news_meta["news_id"].astype(str).tolist())}
+    working = df[["user_id", "news_id", "label"]].copy()
+    working["user_id"] = working["user_id"].astype(str)
+    working["news_id"] = working["news_id"].astype(str)
+    working["news_idx"] = working["news_id"].map(id_to_index)
+    working = working.dropna(subset=["news_idx"]).reset_index(drop=True)
+    if working.empty:
+        raise ValueError("CTR dataset has no trainable rows after filtering by news metadata")
+
+    mean_user_vec = news_emb.mean(axis=0).astype("float32")
+    unique_users = working["user_id"].drop_duplicates().tolist()
+    user_vectors = []
+    for uid in unique_users:
+        user_vec = build_user_vector_from_history(
+            uid,
+            user_history,
+            news_emb,
+            news_meta,
+            id_to_index=id_to_index,
+        )
+        if user_vec is None:
+            user_vec = mean_user_vec
+        user_vectors.append(user_vec.astype("float32"))
+
+    user_to_row = {uid: i for i, uid in enumerate(unique_users)}
+    user_rows = working["user_id"].map(user_to_row).to_numpy(dtype=np.int64)
+    user_matrix = np.stack(user_vectors).astype("float32")
+    user_tensor = torch.from_numpy(np.ascontiguousarray(user_matrix[user_rows]))
+
+    news_rows = working["news_idx"].to_numpy(dtype=np.int64)
+    item_tensor = torch.from_numpy(np.ascontiguousarray(news_emb[news_rows].astype("float32")))
+    label_tensor = torch.from_numpy(
+        np.ascontiguousarray(working["label"].to_numpy(dtype=np.float32))
+    )
+    return TensorDataset(user_tensor, item_tensor, label_tensor)
+
+
 # ----------------------- Trainer -----------------------
 def positive_int(value):
     try:
@@ -102,6 +141,12 @@ def parse_args(argv=None):
     parser.add_argument("--epochs", type=positive_int, default=EPOCHS)
     parser.add_argument("--batch-size", type=positive_int, default=BATCH_SIZE)
     parser.add_argument("--model-path", type=Path, default=PATHS.ctr_model_path)
+    parser.add_argument("--torch-threads", type=positive_int, default=None)
+    parser.add_argument(
+        "--lazy-dataset",
+        action="store_true",
+        help="Use lower-memory per-sample dataset instead of faster materialized tensors.",
+    )
     return parser.parse_args(argv)
 
 
@@ -110,9 +155,14 @@ def train(
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     model_path=PATHS.ctr_model_path,
+    torch_threads=None,
+    lazy_dataset=False,
 ):
     model_path = Path(model_path)
     os.makedirs(model_path.parent, exist_ok=True)
+    if torch_threads is not None:
+        torch.set_num_threads(torch_threads)
+        print(f"Using torch CPU threads: {torch_threads}")
     np.random.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)
 
@@ -134,13 +184,24 @@ def train(
 
     train_df, val_df = train_test_split(df, test_size=VALIDATION_SIZE, random_state=RANDOM_SEED)
 
-    train_ds = CTRDataset(train_df, news_emb, news_meta, user_hist)
-    val_ds = CTRDataset(val_df, news_emb, news_meta, user_hist)
+    dataset_start = perf_counter()
+    if lazy_dataset:
+        train_ds = CTRDataset(train_df, news_emb, news_meta, user_hist)
+        val_ds = CTRDataset(val_df, news_emb, news_meta, user_hist)
+    else:
+        print("Materializing train/validation tensors for faster CPU training...", flush=True)
+        train_ds = build_tensor_dataset(train_df, news_emb, news_meta, user_hist)
+        val_ds = build_tensor_dataset(val_df, news_emb, news_meta, user_hist)
     if len(train_ds) == 0 or len(val_ds) == 0:
         raise ValueError("CTR dataset has no trainable rows after filtering by news metadata")
+    print(
+        f"Prepared datasets: train={len(train_ds)} val={len(val_ds)} "
+        f"in {perf_counter() - dataset_start:.1f}s"
+    )
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    collate = collate_fn if lazy_dataset else None
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate)
 
     emb_dim = news_emb.shape[1]
     model = CTR_MLP(emb_dim).to(DEVICE)
@@ -205,6 +266,8 @@ if __name__ == "__main__":
             epochs=args.epochs,
             batch_size=args.batch_size,
             model_path=args.model_path,
+            torch_threads=args.torch_threads,
+            lazy_dataset=args.lazy_dataset,
         )
     except (ProjectArtifactError, ValueError) as exc:
         print(f"Error: {exc}", file=sys.stderr)

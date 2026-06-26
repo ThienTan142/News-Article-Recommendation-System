@@ -79,6 +79,14 @@ Neu chi can smoke test nhanh pipeline tren CPU, dung tap con nho:
 python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
 ```
 
+Neu train CPU voi 150k rows, dung batch lon hon va materialized tensor dataset mac dinh:
+
+```powershell
+python -m src.train --max-rows 150000 --epochs 3 --batch-size 2048 --torch-threads 4
+```
+
+Neu may it RAM, them `--lazy-dataset` de giam RAM nhung se cham hon.
+
 ## Train on Google Colab
 
 Neu muon train nhanh hon bang GPU Colab, dung notebook:
