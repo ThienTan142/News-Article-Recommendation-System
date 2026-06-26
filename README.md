@@ -75,6 +75,13 @@ python -m src.train
 
 Mac dinh lenh tren train tren toan bo `data/precompute/ctr_dataset.csv`.
 
+Sau khi train, project tao 2 artifact local:
+
+```text
+models/ctr_model.pt
+models/training_report.json
+```
+
 Neu chi can smoke test nhanh pipeline tren CPU, dung tap con nho:
 
 ```powershell
@@ -97,7 +104,7 @@ Neu muon train nhanh hon bang GPU Colab, dung notebook:
 notebooks/colab_train.ipynb
 ```
 
-Trong Colab, doi runtime sang GPU, sua bien `MIND_DIR` toi folder MINDsmall tren Google Drive, roi chay cac cell tu tren xuong duoi. Notebook se clone repo, tao virtualenv sach tai `/content/news-rec-venv`, cai dependencies, build artifact, train CTR reranker, chay recommendation mau, va copy artifact ve Google Drive.
+Trong Colab, doi runtime sang GPU, sua bien `MIND_DIR` toi folder MINDsmall tren Google Drive, roi chay cac cell tu tren xuong duoi. Notebook se clone repo, tao virtualenv sach tai `/content/news-rec-venv`, cai dependencies, build artifact, train CTR reranker, chay recommendation mau, va copy model/training report ve Google Drive.
 
 Neu gap loi `numpy.dtype size changed`, chon `Runtime` -> `Disconnect and delete runtime`, mo lai notebook moi, va chay lai tu dau. Cell cai dependencies phai in ra Python path la:
 
@@ -127,7 +134,7 @@ python -m src.run_recommend_cli --user U8125 --topk 10 --json
 
 ## Demo UI
 
-Project khong dung Streamlit. Demo UI hien la prototype web tinh trong `demo-ui/`.
+Project khong dung Streamlit. Demo UI hien la dashboard web tinh trong `demo-ui/`.
 
 Mo file sau trong trinh duyet:
 
@@ -137,7 +144,8 @@ demo-ui/index.html
 
 UI nay cho phep:
 
-- Load sample recommendation result de demo nhanh.
+- Xem sample training metrics tu full train gan nhat.
+- Paste `models/training_report.json` de render AUC/loss theo epoch.
 - Paste JSON output tu lenh CLI `--json`.
 - Trinh bay ranking source, cold-start status, scores, article cards, va pipeline explanation.
 
@@ -189,6 +197,7 @@ data/                             Local raw/precomputed data, not committed
 | `data/precompute/user_history.json` | `scripts/precompute_user_history.py` | CLI, training |
 | `data/precompute/ctr_dataset.csv` | `src.ctr_dataset.build_ctr_samples` | training |
 | `models/ctr_model.pt` | `python -m src.train` | CTR reranking |
+| `models/training_report.json` | `python -m src.train` | demo UI, review |
 
 ## Notes
 

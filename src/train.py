@@ -1,6 +1,8 @@
 import argparse
+import json
 import os
 import sys
+from datetime import datetime, timezone
 from time import perf_counter
 from pathlib import Path
 
@@ -145,6 +147,7 @@ def parse_args(argv=None):
     parser.add_argument("--epochs", type=positive_int, default=EPOCHS)
     parser.add_argument("--batch-size", type=positive_int, default=BATCH_SIZE)
     parser.add_argument("--model-path", type=Path, default=PATHS.ctr_model_path)
+    parser.add_argument("--report-path", type=Path, default=PATHS.training_report_path)
     parser.add_argument("--torch-threads", type=positive_int, default=None)
     parser.add_argument(
         "--lazy-dataset",
@@ -159,11 +162,14 @@ def train(
     epochs=EPOCHS,
     batch_size=BATCH_SIZE,
     model_path=PATHS.ctr_model_path,
+    report_path=PATHS.training_report_path,
     torch_threads=None,
     lazy_dataset=False,
 ):
     model_path = Path(model_path)
+    report_path = Path(report_path)
     os.makedirs(model_path.parent, exist_ok=True)
+    os.makedirs(report_path.parent, exist_ok=True)
     if torch_threads is not None:
         torch.set_num_threads(torch_threads)
         print(f"Using torch CPU threads: {torch_threads}")
@@ -180,11 +186,13 @@ def train(
         "python scripts/build_ctr_dataset.py",
     )
     df = pd.read_csv(ctr_dataset_path)
+    total_rows = len(df)
 
     # Optional subsample
     if max_rows is not None and len(df) > max_rows:
         df = df.sample(n=max_rows, random_state=RANDOM_SEED).reset_index(drop=True)
         print(f"Using subsample {max_rows} for speed")
+    used_rows = len(df)
 
     train_df, val_df = train_test_split(df, test_size=VALIDATION_SIZE, random_state=RANDOM_SEED)
 
@@ -214,6 +222,7 @@ def train(
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
     print("\nStart training...\n")
+    epoch_metrics = []
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -257,9 +266,42 @@ def train(
             auc = 0.0
 
         print(f"Validation AUC = {auc:.4f}\n")
+        epoch_metrics.append(
+            {
+                "epoch": epoch,
+                "train_loss": round(float(avg_loss), 6),
+                "validation_auc": round(float(auc), 6),
+            }
+        )
 
     torch.save(model.state_dict(), model_path)
     print("Model saved at:", model_path)
+    report = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "model_path": str(model_path),
+        "report_path": str(report_path),
+        "training": {
+            "epochs": epochs,
+            "batch_size": batch_size,
+            "learning_rate": LEARNING_RATE,
+            "device": DEVICE,
+            "torch_threads": torch_threads,
+            "lazy_dataset": lazy_dataset,
+        },
+        "dataset": {
+            "ctr_dataset_path": str(ctr_dataset_path),
+            "total_rows": int(total_rows),
+            "used_rows": int(used_rows),
+            "train_rows": int(len(train_ds)),
+            "validation_rows": int(len(val_ds)),
+            "validation_size": VALIDATION_SIZE,
+            "max_rows": max_rows,
+        },
+        "metrics": epoch_metrics,
+        "final_metrics": epoch_metrics[-1] if epoch_metrics else None,
+    }
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print("Training report saved at:", report_path)
 
 
 if __name__ == "__main__":
@@ -270,6 +312,7 @@ if __name__ == "__main__":
             epochs=args.epochs,
             batch_size=args.batch_size,
             model_path=args.model_path,
+            report_path=args.report_path,
             torch_threads=args.torch_threads,
             lazy_dataset=args.lazy_dataset,
         )

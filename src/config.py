@@ -23,6 +23,7 @@ class ProjectPaths:
     ctr_dataset_path: Path = PRECOMPUTE_DIR / "ctr_dataset.csv"
     precompute_manifest_path: Path = PRECOMPUTE_DIR / "manifest.json"
     ctr_model_path: Path = MODELS_DIR / "ctr_model.pt"
+    training_report_path: Path = MODELS_DIR / "training_report.json"
 
 
 PATHS = ProjectPaths()

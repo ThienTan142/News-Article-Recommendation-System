@@ -125,6 +125,13 @@ class TrainCliTests(unittest.TestCase):
 
         self.assertEqual(args.max_rows, 150000)
 
+    def test_train_exposes_report_path_argument(self):
+        from src.train import parse_args
+
+        args = parse_args(["--report-path", "models/custom_report.json"])
+
+        self.assertEqual(args.report_path, Path("models/custom_report.json"))
+
 
 if __name__ == "__main__":
     unittest.main()

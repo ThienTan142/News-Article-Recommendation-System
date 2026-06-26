@@ -219,12 +219,13 @@ Luong xu ly:
 6. Neu may it RAM, dung `--lazy-dataset` de quay lai dataset tinh theo sample va cache user vector theo `user_id`.
 7. Train `CTR_MLP` voi input la noi vector user va vector item.
 8. Danh gia validation AUC theo tung epoch.
-9. Luu model state dict.
+9. Luu model state dict va training report JSON.
 
 Output:
 
 ```text
 models/ctr_model.pt
+models/training_report.json
 ```
 
 ## 5. Pipeline inference/recommendation
@@ -284,6 +285,7 @@ Luong inference:
 | `data/precompute/user_history.json` | `scripts/precompute_user_history.py` | train, recommend | Co |
 | `data/precompute/ctr_dataset.csv` | `src.ctr_dataset.build_ctr_samples` | train | Co neu train CTR |
 | `models/ctr_model.pt` | `python -m src.train` | CTR reranking | Khong, co fallback |
+| `models/training_report.json` | `python -m src.train` | demo UI, audit | Khong |
 
 ## 7. Thuat toan trong pipeline
 
@@ -353,15 +355,17 @@ Vai tro:
 - Khong chay model.
 - Khong goi backend.
 - Khong thay the CLI.
-- Chi nhan JSON output tu CLI hoac dung sample data de trinh bay UX/UI demo.
+- Render training report JSON va recommendation JSON.
+- Dung sample data de demo nhanh khi chua paste output moi.
 
 Luong demo:
 
-1. Chay CLI voi `--json`.
-2. Copy JSON output.
+1. Train model de tao `models/training_report.json`.
+2. Chay CLI voi `--json`.
 3. Mo `demo-ui/index.html`.
-4. Paste JSON vao UI.
-5. UI render cards, score, source ranking, cold-start status va pipeline explanation.
+4. Paste training report JSON vao phan Training report.
+5. Paste recommendation JSON vao phan Recommendation output.
+6. UI render AUC/loss, dataset split, cards, score, source ranking va pipeline explanation.
 
 ## 10. Lenh chay day du tu dau
 
@@ -375,7 +379,7 @@ python scripts/precompute_user_history.py
 
 python scripts/build_ctr_dataset.py
 
-python -m src.train --max-rows 5000 --epochs 1 --batch-size 512
+python -m src.train --epochs 8 --batch-size 4096 --torch-threads 4
 
 python -m src.run_recommend_cli --user U8125 --topk 10
 python -m src.run_recommend_cli --user U8125 --topk 10 --json
@@ -384,7 +388,7 @@ python -m src.run_recommend_cli --user U8125 --topk 10 --json
 ## 11. Diem can hoan thien tiep
 
 1. Them `scripts/check_artifacts.py` de kiem tra nhanh artifact con thieu.
-2. Luu `models/metrics.json` va `models/model_config.json` sau training.
-3. Them evaluation script voi Recall@K, NDCG@K, MRR.
-4. Toi uu candidate retrieval bang ANN neu corpus lon.
-5. Them CI chay compile va unit tests.
+2. Them evaluation script voi Recall@K, NDCG@K, MRR.
+3. Toi uu candidate retrieval bang ANN neu corpus lon.
+4. Them CI chay compile va unit tests.
+5. Them export HTML/PDF cho training report neu can nop bao cao.

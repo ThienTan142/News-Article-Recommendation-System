@@ -3,134 +3,207 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MINDsmall Recommendation Demo</title>
+    <title>MINDsmall Recommendation Console</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <section class="workspace" aria-label="Recommendation demo workspace">
-        <aside class="sidebar" aria-label="Pipeline controls">
+    <main class="app-shell">
+      <section class="app-frame" aria-label="MINDsmall recommendation dashboard">
+        <aside class="sidebar" aria-label="Project navigation">
           <div class="brand-block">
             <div class="brand-mark" aria-hidden="true">NR</div>
             <div>
-              <p class="eyebrow">MINDsmall pipeline</p>
-              <h1>News recommendation demo</h1>
+              <p class="label">MINDsmall pipeline</p>
+              <h1>Recommendation console</h1>
             </div>
           </div>
 
-          <div class="status-stack" aria-label="Pipeline status">
-            <div class="status-row complete">
-              <span class="status-dot" aria-hidden="true"></span>
-              <div>
-                <strong>Dataset</strong>
-                <span>news.tsv + behaviors.tsv</span>
-              </div>
-            </div>
-            <div class="status-row complete">
-              <span class="status-dot" aria-hidden="true"></span>
-              <div>
-                <strong>Embeddings</strong>
-                <span>SentenceTransformer artifacts</span>
-              </div>
-            </div>
-            <div class="status-row active">
-              <span class="status-dot" aria-hidden="true"></span>
-              <div>
-                <strong>Recommend</strong>
-                <span>CLI JSON pasted into UI</span>
-              </div>
-            </div>
-          </div>
+          <nav class="section-nav" aria-label="Dashboard sections">
+            <a href="#training">Training report</a>
+            <a href="#recommendations">Recommendation output</a>
+            <a href="#pipeline">Pipeline notes</a>
+          </nav>
 
-          <section class="panel compact">
-            <h2>Run command</h2>
-            <div class="command-box">
+          <section class="side-panel" aria-label="Run commands">
+            <h2>Run locally</h2>
+            <div class="command-card">
+              <code>python -m src.train --epochs 8 --batch-size 4096 --torch-threads 4</code>
+              <button type="button" data-copy="python -m src.train --epochs 8 --batch-size 4096 --torch-threads 4">Copy</button>
+            </div>
+            <div class="command-card">
               <code>python -m src.run_recommend_cli --user U8125 --topk 10 --json</code>
-              <button class="icon-button" type="button" data-copy-command aria-label="Copy command">Copy</button>
+              <button type="button" data-copy="python -m src.run_recommend_cli --user U8125 --topk 10 --json">Copy</button>
             </div>
-            <p class="hint">Paste the JSON output below, or load the sample result for a quick demo.</p>
+            <p class="note">Paste JSON from the CLI into this page. No server or Streamlit process is required.</p>
           </section>
 
-          <section class="panel compact">
-            <h2>Demo mode</h2>
-            <div class="segmented" role="group" aria-label="Demo ranking mode">
-              <button type="button" class="segment active" data-mode="ctr">CTR</button>
-              <button type="button" class="segment" data-mode="similarity">Similarity</button>
-            </div>
+          <section class="side-panel" aria-label="Artifact status">
+            <h2>Expected artifacts</h2>
+            <ul class="artifact-list">
+              <li><span>Model</span><strong>models/ctr_model.pt</strong></li>
+              <li><span>Train report</span><strong>models/training_report.json</strong></li>
+              <li><span>CTR data</span><strong>data/precompute/ctr_dataset.csv</strong></li>
+            </ul>
           </section>
         </aside>
 
-        <section class="content" aria-label="Recommendation results">
-          <header class="topbar">
+        <section class="content">
+          <header class="dashboard-header">
             <div>
-              <p class="eyebrow">CLI-first interface</p>
-              <h2>Explainable recommendation output</h2>
+              <p class="label">CPU full train sample</p>
+              <h2>Model performance and recommendation output in one place</h2>
+              <p class="intro">Review training metrics, paste fresh report JSON, then present article recommendations from the CLI.</p>
             </div>
-            <div class="topbar-actions">
-              <button class="secondary-button" type="button" data-load-sample>Load sample</button>
-              <button class="primary-button" type="button" data-render-json>Render JSON</button>
+            <div class="header-actions">
+              <button class="secondary-button" type="button" data-load-report>Load train sample</button>
+              <button class="primary-button" type="button" data-load-recommendation>Load recommendation sample</button>
             </div>
           </header>
 
-          <section class="metrics-grid" aria-label="Recommendation summary">
-            <article class="metric">
-              <span>Ranking source</span>
-              <strong data-summary-source>CTR</strong>
-            </article>
-            <article class="metric">
-              <span>Cold start</span>
-              <strong data-summary-cold>No</strong>
-            </article>
-            <article class="metric">
-              <span>Results</span>
-              <strong data-summary-count>5</strong>
-            </article>
-          </section>
-
-          <section class="input-panel" aria-label="JSON input">
-            <label for="json-input">CLI JSON output</label>
-            <textarea id="json-input" spellcheck="false" data-json-input></textarea>
-            <p class="error-message" role="alert" data-error hidden></p>
-          </section>
-
-          <section class="result-layout">
-            <div class="results-column">
-              <div class="section-heading">
-                <h2>Recommended articles</h2>
-                <span data-result-caption>Ranked by CTR, diversified by MMR</span>
-              </div>
-              <div class="result-list" data-results></div>
+          <section id="training" class="dashboard-section" aria-label="Training report">
+            <div class="section-title">
+              <h2>Training report</h2>
+              <p>Metrics from the CTR reranker training run.</p>
             </div>
 
-            <aside class="explain-panel" aria-label="Pipeline explanation">
-              <h2>How this result was produced</h2>
-              <ol class="timeline">
-                <li>
-                  <strong>User profile</strong>
-                  <span>Average embeddings from read history, or mean article vector for cold start.</span>
-                </li>
-                <li>
-                  <strong>Candidate retrieval</strong>
-                  <span>Cosine similarity over precomputed MINDsmall article embeddings.</span>
-                </li>
-                <li>
-                  <strong>CTR reranking</strong>
-                  <span>MLP scores user/article embedding pairs when the trained model is available.</span>
-                </li>
-                <li>
-                  <strong>MMR diversity</strong>
-                  <span>Final pass reduces near-duplicate recommendations.</span>
-                </li>
-              </ol>
-              <div class="embedding-map" aria-label="Embedding map preview">
-                <span class="node primary"></span>
-                <span class="node n1"></span>
-                <span class="node n2"></span>
-                <span class="node n3"></span>
-                <span class="node n4"></span>
-                <span class="node n5"></span>
+            <div class="kpi-grid" aria-label="Training summary">
+              <article class="kpi-card">
+                <span>Final validation AUC</span>
+                <strong data-final-auc>0.7435</strong>
+                <small>Higher is better</small>
+              </article>
+              <article class="kpi-card">
+                <span>Final train loss</span>
+                <strong data-final-loss>0.4391</strong>
+                <small>Lower is better</small>
+              </article>
+              <article class="kpi-card">
+                <span>Rows used</span>
+                <strong data-used-rows>1.1M</strong>
+                <small data-split-label>964,941 train / 170,284 validation</small>
+              </article>
+              <article class="kpi-card">
+                <span>Epochs</span>
+                <strong data-epochs>8</strong>
+                <small data-train-config>Batch 4096, CPU</small>
+              </article>
+            </div>
+
+            <div class="training-layout">
+              <article class="chart-panel">
+                <div class="panel-heading">
+                  <div>
+                    <h3>AUC and loss by epoch</h3>
+                    <p data-report-caption>Full local CPU run, 8 epochs.</p>
+                  </div>
+                  <div class="legend" aria-label="Chart legend">
+                    <span class="legend-auc">Validation AUC</span>
+                    <span class="legend-loss">Train loss</span>
+                  </div>
+                </div>
+                <div class="epoch-chart" data-training-chart aria-label="Training metric chart"></div>
+              </article>
+
+              <article class="report-panel">
+                <div class="panel-heading">
+                  <div>
+                    <h3>Import training report</h3>
+                    <p>Paste `models/training_report.json` after a new train run.</p>
+                  </div>
+                </div>
+                <textarea class="json-box" spellcheck="false" data-report-input aria-label="Training report JSON"></textarea>
+                <p class="error-message" role="alert" data-report-error hidden></p>
+                <div class="button-row">
+                  <button class="secondary-button" type="button" data-load-report>Sample report</button>
+                  <button class="primary-button" type="button" data-render-report>Render report</button>
+                </div>
+              </article>
+            </div>
+
+            <article class="table-panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Epoch details</h3>
+                  <p>Loss and validation AUC captured at each epoch.</p>
+                </div>
               </div>
-            </aside>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Epoch</th>
+                      <th>Train loss</th>
+                      <th>Validation AUC</th>
+                      <th>Delta AUC</th>
+                    </tr>
+                  </thead>
+                  <tbody data-epoch-table></tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section id="recommendations" class="dashboard-section" aria-label="Recommendation output">
+            <div class="section-title">
+              <h2>Recommendation output</h2>
+              <p>Render JSON from `src.run_recommend_cli` for demo presentation.</p>
+            </div>
+
+            <div class="recommendation-grid">
+              <article class="json-panel">
+                <div class="panel-heading">
+                  <div>
+                    <h3>CLI JSON input</h3>
+                    <p>Paste output from the recommendation command.</p>
+                  </div>
+                </div>
+                <textarea class="json-box" spellcheck="false" data-json-input aria-label="Recommendation JSON"></textarea>
+                <p class="error-message" role="alert" data-recommendation-error hidden></p>
+                <div class="button-row">
+                  <button class="secondary-button" type="button" data-load-recommendation>Sample output</button>
+                  <button class="primary-button" type="button" data-render-json>Render recommendations</button>
+                </div>
+              </article>
+
+              <article class="summary-panel" aria-label="Recommendation summary">
+                <div class="summary-item">
+                  <span>Ranking source</span>
+                  <strong data-summary-source>CTR</strong>
+                </div>
+                <div class="summary-item">
+                  <span>Cold start</span>
+                  <strong data-summary-cold>No</strong>
+                </div>
+                <div class="summary-item">
+                  <span>Results</span>
+                  <strong data-summary-count>5</strong>
+                </div>
+                <p data-result-caption>Ranked by CTR, diversified by MMR.</p>
+              </article>
+            </div>
+
+            <div class="result-list" data-results aria-live="polite"></div>
+          </section>
+
+          <section id="pipeline" class="dashboard-section pipeline-section" aria-label="Pipeline notes">
+            <div class="section-title">
+              <h2>Pipeline notes</h2>
+              <p>The UI is static, but the data flow mirrors the local ML pipeline.</p>
+            </div>
+            <ol class="pipeline-list">
+              <li>
+                <strong>Precompute</strong>
+                <span>Read MINDsmall, build news embeddings, metadata and user history artifacts.</span>
+              </li>
+              <li>
+                <strong>Train</strong>
+                <span>Build CTR samples, train the MLP reranker, save model and training report.</span>
+              </li>
+              <li>
+                <strong>Recommend</strong>
+                <span>Retrieve candidates by cosine similarity, rerank with CTR, then diversify with MMR.</span>
+              </li>
+            </ol>
           </section>
         </section>
       </section>
@@ -138,16 +211,16 @@
 
     <template id="result-template">
       <article class="result-card">
-        <div class="article-thumb" aria-hidden="true"></div>
+        <div class="article-rank" data-rank></div>
         <div class="article-body">
           <div class="article-meta">
-            <span data-rank></span>
             <span data-category></span>
+            <span data-news-id></span>
           </div>
           <h3 data-title></h3>
           <p data-text></p>
-          <div class="score-row">
-            <span data-news-id></span>
+          <div class="score-line">
+            <span>CTR score</span>
             <meter min="0" max="1" value="0" data-score-meter></meter>
             <strong data-score></strong>
           </div>

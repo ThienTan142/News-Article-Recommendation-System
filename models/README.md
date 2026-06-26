@@ -2,16 +2,19 @@
 
 This directory stores local trained model artifacts.
 
-Expected artifact:
+Expected artifacts:
 
 ```text
 models/ctr_model.pt
+models/training_report.json
 ```
 
-Generate it with:
+Generate them with:
 
 ```powershell
 python -m src.train
 ```
 
-For larger or production models, prefer Git LFS, release assets, or an external artifact store instead of committing binaries directly.
+`ctr_model.pt` is used by CTR reranking. `training_report.json` stores dataset split, training config, loss, and validation AUC for the demo UI.
+
+For larger or production artifacts, prefer Git LFS, release assets, or an external artifact store instead of committing binaries directly.
